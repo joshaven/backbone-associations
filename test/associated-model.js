@@ -3,9 +3,9 @@
 
 $(document).ready(function () {
     'use strict';
-    var testRoot = window, child1, child2, child3, child4, dept1, emp, loc1, loc2, parent1,
+    var globalRoot = window, child1, child2, child3, child4, dept1, emp, loc1, loc2, parent1,
         project1, project2, Location, locations, map2locs, Project, Department, store, map2dept,
-        Node, Dependent,
+        Dependent,
         names = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd'];
 
 
@@ -126,7 +126,7 @@ $(document).ready(function () {
         return found || id;
     };
 
-    testRoot.Employee = Backbone.AssociatedModel.extend({
+    globalRoot.Employee = Backbone.AssociatedModel.extend({
         relations: [
             {
                 type: Backbone.One,
@@ -160,7 +160,7 @@ $(document).ready(function () {
         urlRoot: '/employee'
     });
 
-    Node = Backbone.AssociatedModel.extend({
+    globalRoot.Node = Backbone.AssociatedModel.extend({
         relations: [
             {
                 type: Backbone.One,
@@ -180,7 +180,7 @@ $(document).ready(function () {
 
     module("Backbone.AssociatedModel", {
         setup: function () {
-            emp = new testRoot.Employee({
+            emp = new globalRoot.Employee({
                 fname: "John",
                 lname: "Smith",
                 age: 21,
@@ -1325,7 +1325,7 @@ $(document).ready(function () {
                 relatedModel: function () {
                     return function (attrs) {
                         if (_.isArray(attrs.dependents)) {
-                            return new testRoot.Employee(attrs);
+                            return new globalRoot.Employee(attrs);
                         }
 
                         return new Dependent(attrs);
@@ -1358,7 +1358,7 @@ $(document).ready(function () {
             }]
         });
 
-        equal(club.get('members[0]') instanceof testRoot.Employee, true);
+        equal(club.get('members[0]') instanceof globalRoot.Employee, true);
         equal(club.get('members[1]') instanceof Dependent, true);
     });
 
@@ -1696,7 +1696,7 @@ $(document).ready(function () {
 
     test("Issue#67 : Nested set shouldn't destroy references", 2, function () {
         var Team, json1, json2, team, employee1, manager1;
-        Team = Backbone.Collection.extend({model: testRoot.Employee});
+        Team = Backbone.Collection.extend({model: globalRoot.Employee});
         json1 = [
             {
                 id: 'e1',
@@ -1933,7 +1933,7 @@ $(document).ready(function () {
 
     test("Self-Reference", function () {
         var emp2, emp3;
-        emp2 = new testRoot.Employee({'fname': 'emp2'});
+        emp2 = new globalRoot.Employee({'fname': 'emp2'});
 
         emp2.on('change:manager', function () {
             ok(true, "`change:manager` fired...");
@@ -1948,7 +1948,7 @@ $(document).ready(function () {
         equal(emp2.get('fname'), 'newEmp2', "emp's fname should be changed");
         equal(emp2.get('manager').get('fname'), 'newEmp2', "manager's fname should be changed");
 
-        emp3 = new testRoot.Employee({fname: 'emp3', manager: {fname: 'emp4'}});
+        emp3 = new globalRoot.Employee({fname: 'emp3', manager: {fname: 'emp4'}});
         equal(emp3.get('manager.fname'), 'emp4', "manager's fname should be emp4");
     });
 
@@ -1990,7 +1990,7 @@ $(document).ready(function () {
 
     test("Self-Reference `toJSON`", function () {
         var emp2, rawJson;
-        emp2 = new testRoot.Employee({'fname': 'emp2'});
+        emp2 = new globalRoot.Employee({'fname': 'emp2'});
         emp2.idAttribute = "emp_id";
         emp2.set('emp_id', 1);
         emp2.set({'manager': emp2});
@@ -2118,14 +2118,14 @@ $(document).ready(function () {
         var emp2, emp3, works_for;
         emp.set('works_for', {name: "Marketing", number: 29});
 
-        emp2 = new testRoot.Employee({
+        emp2 = new globalRoot.Employee({
             fname: "Tom",
             lname: "Hanks",
             age: 41,
             sex: "M"
         });
 
-        emp3 = new testRoot.Employee({
+        emp3 = new globalRoot.Employee({
             fname: "Michelle",
             lname: "Pfiefer",
             age: 42,
@@ -2213,7 +2213,7 @@ $(document).ready(function () {
     test("Many relation's options : parse", 3, function () {
         var NewEmployee, emp2, Company, company;
         //relation options with `set`
-        NewEmployee = testRoot.Employee.extend({
+        NewEmployee = globalRoot.Employee.extend({
             parse: function (obj) {
                 if (obj.sex === "M") {
                     obj.prefix = "Mr.";
@@ -2268,7 +2268,7 @@ $(document).ready(function () {
 
     test("One relation's options passed from parent", 2, function () {
         var NewEmployee, Room, room;
-        NewEmployee = testRoot.Employee.extend({
+        NewEmployee = globalRoot.Employee.extend({
             parse: function (obj) {
                 obj.prefix = "Mr.";
                 return obj;
@@ -2385,23 +2385,24 @@ $(document).ready(function () {
 
     module("Cyclic Graph", {
         setup: function () {
-            var node1, node2, node3;
-            node1 = new Node({name: 'n1'});
-            node1.id = "n1";
-            node2 = new Node({name: 'n2'});
-            node2.id = "n2";
-            node3 = new Node({name: 'n3'});
-            node3.id = "n3";
-
+            globalRoot.node1 = new globalRoot.Node({name: 'n1'});
+            globalRoot.node1.id = "n1";
+            globalRoot.node2 = new globalRoot.Node({name: 'n2'});
+            globalRoot.node2.id = "n2";
+            globalRoot.node3 = new globalRoot.Node({name: 'n3'});
+            globalRoot.node3.id = "n3";
         }
     });
 
     test("Call toJSON in cycles -  Issue#58", 1, function () {
-        var node1, node2, node3;
+        var node1 = globalRoot.node1,
+            node2 = globalRoot.node2,
+            node3 = globalRoot.node3;
+
         node1.set({parent: node3, children: [node2]});
 
         node1.on('add:children', function () {
-            var node12Json = "{\"name\":\"n1\",\"parent\": {\"name\":\"n3\"},\"children\": [{\"name\":\"n2\"},{\"name\":\"n3\"}]}";
+            var node12Json = JSON.stringify({name: "n1", parent: {name: "n3"}, children: [{name: "n2"}, {name: "n3"}]});
             equal(JSON.stringify(node1.toJSON()), node12Json);
         });
 
@@ -2409,7 +2410,10 @@ $(document).ready(function () {
     });
 
     test("set,trigger", 13, function () {
-        var node1, node2, node3;
+        var node1 = globalRoot.node1,
+            node2 = globalRoot.node2,
+            node3 = globalRoot.node3;
+
         node1.on("change:parent", function () {
             node1.trigger("nestedevent", arguments);
             ok(true, "node1 change:parent fired...");
@@ -2457,7 +2461,11 @@ $(document).ready(function () {
     });
 
     test("toJSON", 1, function () {
-        var node1, node2, node3, rawJSON;
+        var node1 = globalRoot.node1,
+            node2 = globalRoot.node2,
+            node3 = globalRoot.node3,
+            rawJSON;
+
         node1.set({parent: node2, children: [node3]});
         node2.set({parent: node3, children: [node1]});
         node3.set({parent: node1, children: [node2]});
@@ -2496,7 +2504,10 @@ $(document).ready(function () {
     });
 
     test("clone", 6, function () {
-        var node1, node2, node3, cloneNode;
+        var node1 = globalRoot.node1,
+            node2 = globalRoot.node2,
+            node3 = globalRoot.node3,
+            cloneNode;
         node1.set({parent: node2, children: [node3]});
         cloneNode = node1.clone();
         equal(node1.get('name'), cloneNode.get('name'), 'name of node should be same as clone');
@@ -2513,7 +2524,7 @@ $(document).ready(function () {
     module("Examples", {
         setup: function () {
 
-            emp = new testRoot.Employee({
+            emp = new globalRoot.Employee({
                 fname: "John",
                 lname: "Smith",
                 age: 21,
